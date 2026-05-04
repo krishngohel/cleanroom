@@ -33,6 +33,9 @@ node_modules/
 dashboard/dist/
 dashboard/vite.log
 dashboard/vite-err.log
+server/uvicorn.log
+server/uvicorn-err.log
+*.log
 
 # Docker
 .docker/
