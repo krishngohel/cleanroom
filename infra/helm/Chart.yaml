@@ -1,0 +1,18 @@
+apiVersion: v2
+name: cleanroom
+description: On-premise AI platform for compliance-sensitive organizations
+type: application
+version: 0.2.0
+appVersion: "0.1.0"
+keywords:
+  - on-premise-ai
+  - llm
+  - compliance
+  - air-gap
+maintainers:
+  - name: Cleanroom Team
+dependencies:
+  - name: postgresql
+    version: "14.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled

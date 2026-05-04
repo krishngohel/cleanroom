@@ -1,0 +1,29 @@
+2026-05-02 19:35:37 [info     ] cleanroom_server_starting
+2026-05-02 19:38:22 [info     ] org_registered                 epsilon_max=10.0 org_id=acme-corp
+INFO:     127.0.0.1:60898 - "POST /orgs/acme-corp/register HTTP/1.1" 201 Created
+2026-05-02 19:38:22 [info     ] org_registered                 epsilon_max=10.0 org_id=beta-inc
+INFO:     127.0.0.1:60898 - "POST /orgs/beta-inc/register HTTP/1.1" 201 Created
+2026-05-02 19:38:22 [info     ] org_registered                 epsilon_max=10.0 org_id=gamma-labs
+INFO:     127.0.0.1:60898 - "POST /orgs/gamma-labs/register HTTP/1.1" 201 Created
+INFO:     127.0.0.1:60898 - "GET /orgs/budgets?session_id=demo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60898 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60901 - "GET /orgs/budgets?session_id=demo HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60901 - "GET /audit/?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51217 - "GET /rounds/active/status?session_id=default HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51643 - "GET /rounds/?session_id=default HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56380 - "GET /rounds/?session_id=default HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56380 - "GET /rounds/active/status?session_id=default HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56380 - "GET /orgs/budgets?session_id%5Bclient%5D=%5Bobject+Object%5D&session_id%5BqueryKey%5D%5B0%5D=budgets&session_id%5Bsignal%5D=%5Bobject+AbortSignal%5D HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56380 - "GET /orgs/budgets?session_id%5Bclient%5D=%5Bobject+Object%5D&session_id%5BqueryKey%5D%5B0%5D=budgets&session_id%5Bsignal%5D=%5Bobject+AbortSignal%5D HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56380 - "GET /rounds/?session_id%5Bclient%5D=%5Bobject+Object%5D&session_id%5BqueryKey%5D%5B0%5D=rounds&session_id%5Bsignal%5D=%5Bobject+AbortSignal%5D HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56380 - "GET /rounds/?session_id%5Bclient%5D=%5Bobject+Object%5D&session_id%5BqueryKey%5D%5B0%5D=rounds&session_id%5Bsignal%5D=%5Bobject+AbortSignal%5D HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56380 - "GET /audit/?limit=200 HTTP/1.1" 200 OK
+2026-05-02 20:00:17 [info     ] cleanroom_server_stopping
+2026-05-02 23:51:46 [info     ] cleanroom_starting             version=0.1.0
+2026-05-02 23:51:53 [info     ] cleanroom_starting             version=0.1.0
+2026-05-02 23:56:06 [info     ] cleanroom_starting             version=0.1.0
+2026-05-02 23:56:42 [info     ] cleanroom_starting             version=0.1.0
+2026-05-02 23:56:42 [info     ] connectors_loaded              count=0
+2026-05-02 23:56:42 [info     ] workflows_loaded               count=4
+2026-05-02 23:56:42 [info     ] cleanroom_ready
+INFO:     127.0.0.1:51163 - "GET /audit/?limit=200 HTTP/1.1" 404 Not Found

@@ -1,0 +1,49 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.coverage
+coverage.xml
+htmlcov/
+
+# Secrets — never commit
+certs/
+*.key
+*.pem
+*.crt
+*.p12
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dashboard/dist/
+dashboard/vite.log
+dashboard/vite-err.log
+
+# Docker
+.docker/
+
+# Database
+*.sqlite3
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/

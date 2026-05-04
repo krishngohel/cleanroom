@@ -1,0 +1,33 @@
+id: contract_review
+name: Contract Review & Clause Extraction
+description: Analyzes a contract document and extracts key clauses, obligations, and risk factors.
+parameters:
+  - name: contract_text
+    type: text
+    required: true
+    description: "Paste the full contract text or key sections to review"
+  - name: review_focus
+    type: string
+    required: false
+    description: "Specific focus area (e.g., 'liability clauses', 'payment terms', 'IP ownership')"
+connectors: []
+prompt_template: |
+  You are a legal analyst reviewing a contract. Analyze the following contract text carefully.
+
+  Review Focus: {review_focus}
+
+  Contract Text:
+  {contract_text}
+
+  {data}
+
+  Provide:
+  1. **Key Obligations** - What each party is required to do
+  2. **Payment Terms** - All financial obligations and timing
+  3. **Termination Conditions** - How and when the contract can be ended
+  4. **Liability & Indemnification** - Risk allocation between parties
+  5. **Notable Risks** - Clauses that warrant legal review or negotiation
+  6. **Missing Provisions** - Standard clauses that appear to be absent
+
+  Flag any unusual or potentially unfavorable terms clearly.
+output_format: narrative

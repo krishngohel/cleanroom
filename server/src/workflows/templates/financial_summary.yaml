@@ -1,0 +1,29 @@
+id: financial_summary
+name: Monthly Financial Summary
+description: Generates a narrative financial summary for a given period. Connect a SQL data source with transaction data for best results.
+parameters:
+  - name: period
+    type: string
+    required: true
+    description: "The period to summarize (e.g., 'Q1 2024', 'January 2024')"
+  - name: department
+    type: string
+    required: false
+    description: "Filter by department name (optional)"
+connectors: []
+prompt_template: |
+  You are a financial analyst generating an internal report. Analyze the data provided and write a clear, professional monthly financial summary.
+
+  Period: {period}
+  Department: {department}
+
+  {data}
+
+  Write a summary covering:
+  1. Overall financial performance
+  2. Key revenue and expense trends
+  3. Notable variances or anomalies
+  4. Forward-looking observations
+
+  Keep the tone professional and concise. If no data was provided, generate a template summary with placeholder sections.
+output_format: narrative

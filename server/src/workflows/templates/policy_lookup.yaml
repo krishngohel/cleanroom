@@ -1,0 +1,18 @@
+id: policy_lookup
+name: Policy & HR Document Lookup
+description: Answers employee questions about company policies using internal HR documents.
+parameters:
+  - name: question
+    type: string
+    required: true
+    description: "The policy question to answer (e.g., 'What is the vacation accrual policy?')"
+connectors: []
+prompt_template: |
+  You are an HR assistant helping an employee understand company policies. Answer their question based solely on the information provided. If the information needed to answer is not present, say so clearly rather than guessing.
+
+  Employee Question: {question}
+
+  {data}
+
+  Provide a clear, friendly answer. Cite specific policy sections or document names where applicable. If the policy has exceptions or edge cases relevant to the question, mention them.
+output_format: narrative

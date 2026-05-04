@@ -1,0 +1,18 @@
+# Normalize line endings to LF in the repo; checkout as-is on all platforms
+* text=auto eol=lf
+
+# Shell scripts must always be LF (for Linux execution)
+*.sh text eol=lf
+installer/install.sh text eol=lf
+
+# Windows batch files use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+package-lock.json binary

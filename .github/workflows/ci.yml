@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-server:
+    name: Lint (server)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install ruff
+      - run: ruff check server/src server/tests
+
+  test-server:
+    name: Server Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install deps
+        working-directory: server
+        run: pip install -e ".[dev]"
+      - name: Run tests
+        working-directory: server
+        run: |
+          pytest tests/ -v \
+            --ignore=tests/test_integration.py \
+            --cov=src --cov-report=xml \
+            --cov-fail-under=60
+      - uses: codecov/codecov-action@v4
+        with:
+          files: server/coverage.xml
+
+  test-dashboard:
+    name: Dashboard Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - name: Install deps
+        working-directory: dashboard
+        run: npm ci
+      - name: Type check and build
+        working-directory: dashboard
+        run: npm run build
