@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 """
 End-to-end integration test for the Cleanroom AI API.
 Verifies auth, chat proxying, workflow listing, and audit logging work together.
 Requires the full stack (Ollama + PostgreSQL) — skip in unit test CI.
 """
+from __future__ import annotations
 
 import pytest
 

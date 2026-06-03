@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from httpx import AsyncClient
 
 
@@ -62,3 +61,32 @@ async def test_chat_completion_with_auth(client: AsyncClient, admin_token: str):
 
     assert resp.status_code == 200
     assert resp.json()["choices"][0]["message"]["content"] == "Hello!"
+
+
+async def test_me_endpoint(client: AsyncClient, admin_token: str):
+    resp = await client.get("/auth/me", headers={"Authorization": f"Bearer {admin_token}"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["username"] == "admin"
+    assert data["role"] == "admin"
+
+
+async def test_get_model_with_auth(client: AsyncClient, admin_token: str):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.raise_for_status = MagicMock()
+    mock_resp.json.return_value = {"models": [{"name": "llama3.1:8b"}]}
+
+    mock_http = AsyncMock()
+    mock_http.__aenter__ = AsyncMock(return_value=mock_http)
+    mock_http.__aexit__ = AsyncMock(return_value=False)
+    mock_http.get = AsyncMock(return_value=mock_resp)
+
+    with patch("src.api.models_router.httpx.AsyncClient", return_value=mock_http):
+        resp = await client.get(
+            "/v1/models/llama3.1:8b",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+    assert resp.status_code == 200
+    assert resp.json()["id"] == "llama3.1:8b"
