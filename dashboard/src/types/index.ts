@@ -80,3 +80,113 @@ export interface AuthState {
   token: string | null;
   user: Pick<User, "id" | "username" | "role"> | null;
 }
+
+export interface ProjectSummary {
+  id: string;
+  name: string;
+  description: string;
+  system_prompt: string;
+  default_model: string | null;
+  color: string;
+  icon: string;
+  owner_id: string | null;
+  is_shared: boolean;
+  file_count: number;
+  total_bytes: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectFile {
+  id: string;
+  project_id: string;
+  filename: string;
+  size_bytes: number;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
+export interface ProjectDetail extends ProjectSummary {
+  files: ProjectFile[];
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  description: string;
+  root_path: string;
+  owner_id: string | null;
+  is_shared: boolean;
+  is_writable: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TreeEntry {
+  path: string;
+  type: "file" | "dir";
+  size?: number;
+}
+
+export interface FileRead {
+  path: string;
+  content: string;
+  size_bytes: number;
+}
+
+export interface ProposedEdit {
+  path: string;
+  current_content: string;
+  proposed_content: string;
+  model: string;
+}
+
+export interface SavedPrompt {
+  id: string;
+  title: string;
+  slash: string | null;
+  body: string;
+  category: string;
+  icon: string;
+  owner_id: string | null;
+  is_shared: boolean;
+  use_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectSearchSnippet {
+  line: number;
+  before: string;
+  match: string;
+  after: string;
+}
+
+export interface ProjectSearchHit {
+  file_id: string;
+  filename: string;
+  match_count: number;
+  snippets: ProjectSearchSnippet[];
+}
+
+export interface ProjectSearchResult {
+  query: string;
+  file_count: number;
+  total_matches: number;
+  files: ProjectSearchHit[];
+}
+
+export interface InsightsSummary {
+  since: string;
+  days: number;
+  totals: {
+    users: number;
+    projects: number;
+    workspaces: number;
+    chats_in_period: number;
+    audit_events_in_period: number;
+  };
+  by_action: { action: string; count: number }[];
+  top_users: { username: string; count: number }[];
+  daily: { day: string; count: number }[];
+}

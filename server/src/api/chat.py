@@ -7,13 +7,16 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import get_current_user
 from ..config import settings
-from ..database import AuditLog, User, get_db
+from ..database import AuditLog, Project, ProjectFile, User, get_db
 
 router = APIRouter(tags=["chat"])
+
+MAX_PROJECT_CONTEXT_BYTES = 80_000
 
 
 class ChatMessage(BaseModel):
@@ -27,6 +30,43 @@ class ChatRequest(BaseModel):
     stream: bool = False
     temperature: float | None = None
     max_tokens: int | None = None
+    project_id: str | None = None
+
+
+async def _build_project_context(
+    db: AsyncSession, project_id: str, user: User
+) -> tuple[str | None, int]:
+    """Return (system_prompt_with_files, bytes_added). None if project missing."""
+    p = (await db.execute(select(Project).where(Project.id == project_id))).scalar_one_or_none()
+    if p is None:
+        return None, 0
+    if not p.is_shared and p.owner_id != user.id and user.role != "admin":
+        return None, 0
+
+    files_result = await db.execute(
+        select(ProjectFile)
+        .where(ProjectFile.project_id == project_id)
+        .order_by(ProjectFile.created_at)
+    )
+    files = files_result.scalars().all()
+
+    parts = []
+    if p.system_prompt.strip():
+        parts.append(p.system_prompt.strip())
+
+    if files:
+        parts.append("## Project knowledge files\n")
+        running = 0
+        for f in files:
+            block = f"### {f.filename}\n```\n{f.content}\n```\n"
+            if running + len(block) > MAX_PROJECT_CONTEXT_BYTES:
+                parts.append(f"_…{len(files) - files.index(f)} more files truncated for context length…_")
+                break
+            parts.append(block)
+            running += len(block)
+
+    composed = "\n\n".join(parts).strip()
+    return composed or None, len(composed)
 
 
 @router.post("/v1/chat/completions")
@@ -37,9 +77,20 @@ async def chat_completions(
     db: AsyncSession = Depends(get_db),
 ):
     model = body.model or settings.default_model
+    messages = [m.model_dump() for m in body.messages]
+
+    project_ctx_bytes = 0
+    if body.project_id:
+        ctx, project_ctx_bytes = await _build_project_context(db, body.project_id, current_user)
+        if ctx:
+            # Prepend a system message with the project knowledge. If the caller
+            # already sent a system message, keep theirs after ours so the
+            # caller's instructions win.
+            messages = [{"role": "system", "content": ctx}, *messages]
+
     payload: dict = {
         "model": model,
-        "messages": [m.model_dump() for m in body.messages],
+        "messages": messages,
         "stream": body.stream,
     }
     if body.temperature is not None:
@@ -54,7 +105,12 @@ async def chat_completions(
             action="chat_completion",
             resource_type="model",
             resource_id=model,
-            details={"message_count": len(body.messages), "stream": body.stream},
+            details={
+                "message_count": len(body.messages),
+                "stream": body.stream,
+                "project_id": body.project_id,
+                "project_context_bytes": project_ctx_bytes,
+            },
             ip_address=request.client.host if request.client else None,
         )
     )

@@ -1,10 +1,20 @@
 import type {
   AuditLogEntry,
   Connector,
+  FileRead,
+  InsightsSummary,
+  ProjectDetail,
+  ProjectFile,
+  ProjectSearchResult,
+  ProjectSummary,
+  ProposedEdit,
+  SavedPrompt,
   SystemStatus,
+  TreeEntry,
   User,
   Workflow,
   WorkflowRun,
+  Workspace,
 } from "../types";
 
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8000";
@@ -96,6 +106,7 @@ export const api = {
       messages: { role: string; content: string }[],
       model: string,
       onChunk?: (text: string) => void,
+      projectId?: string | null,
     ): Promise<string> => {
       const token = localStorage.getItem(TOKEN_KEY);
       const headers: Record<string, string> = {
@@ -106,7 +117,12 @@ export const api = {
       const resp = await fetch(`${BASE_URL}/v1/chat/completions`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ messages, model, stream: !!onChunk }),
+        body: JSON.stringify({
+          messages,
+          model,
+          stream: !!onChunk,
+          ...(projectId ? { project_id: projectId } : {}),
+        }),
       });
 
       if (!resp.ok) {
@@ -215,4 +231,206 @@ export const api = {
   status: {
     get: () => request<SystemStatus>("/status"),
   },
+
+  tenant: {
+    getPublic: () => request<PublicTenantSettings>("/tenant/public-settings"),
+    get: () => request<TenantSettings>("/tenant/settings"),
+    update: (data: Partial<TenantSettings>) =>
+      request<TenantSettings>("/tenant/settings", {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+  },
+
+  projects: {
+    list: () => request<ProjectSummary[]>("/projects"),
+    get: (id: string) => request<ProjectDetail>(`/projects/${id}`),
+    create: (data: {
+      name: string;
+      description?: string;
+      system_prompt?: string;
+      default_model?: string | null;
+      color?: string;
+      icon?: string;
+      is_shared?: boolean;
+    }) =>
+      request<ProjectSummary>("/projects", { method: "POST", body: JSON.stringify(data) }),
+    update: (
+      id: string,
+      data: Partial<{
+        name: string;
+        description: string;
+        system_prompt: string;
+        default_model: string | null;
+        color: string;
+        icon: string;
+        is_shared: boolean;
+      }>,
+    ) =>
+      request<ProjectSummary>(`/projects/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    remove: (id: string) => request<void>(`/projects/${id}`, { method: "DELETE" }),
+    uploadFile: async (id: string, file: File): Promise<ProjectFile> => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const form = new FormData();
+      form.append("file", file);
+      const resp = await fetch(`${BASE_URL}/projects/${id}/files`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      });
+      if (!resp.ok) {
+        let detail = `HTTP ${resp.status}`;
+        try {
+          const body = (await resp.json()) as { detail?: string };
+          detail = body.detail ?? detail;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(detail);
+      }
+      return resp.json() as Promise<ProjectFile>;
+    },
+    removeFile: (projectId: string, fileId: string) =>
+      request<void>(`/projects/${projectId}/files/${fileId}`, { method: "DELETE" }),
+  },
+
+  code: {
+    listWorkspaces: () => request<Workspace[]>("/code/workspaces"),
+    createWorkspace: (data: {
+      name: string;
+      description?: string;
+      root_path: string;
+      is_shared?: boolean;
+      is_writable?: boolean;
+    }) =>
+      request<Workspace>("/code/workspaces", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    createPersonalWorkspace: (data: {
+      name: string;
+      description?: string;
+      is_shared?: boolean;
+    }) =>
+      request<Workspace>("/code/workspaces/personal", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    getWorkspace: (id: string) => request<Workspace>(`/code/workspaces/${id}`),
+    updateWorkspace: (
+      id: string,
+      data: Partial<{ name: string; description: string; is_shared: boolean; is_writable: boolean }>,
+    ) =>
+      request<Workspace>(`/code/workspaces/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    deleteWorkspace: (id: string) =>
+      request<void>(`/code/workspaces/${id}`, { method: "DELETE" }),
+    listTree: (id: string) =>
+      request<{ entries: TreeEntry[] }>(`/code/workspaces/${id}/tree`),
+    readFile: (id: string, path: string) =>
+      request<FileRead>(
+        `/code/workspaces/${id}/file?path=${encodeURIComponent(path)}`,
+      ),
+    writeFile: (id: string, path: string, content: string) =>
+      request<{ path: string; size_bytes: number }>(
+        `/code/workspaces/${id}/file`,
+        { method: "PUT", body: JSON.stringify({ path, content }) },
+      ),
+    createDir: (id: string, path: string) =>
+      request<{ path: string; created: boolean }>(
+        `/code/workspaces/${id}/dir`,
+        { method: "POST", body: JSON.stringify({ path }) },
+      ),
+    deleteFile: (id: string, path: string) =>
+      request<void>(
+        `/code/workspaces/${id}/file?path=${encodeURIComponent(path)}`,
+        { method: "DELETE" },
+      ),
+    proposeEdit: (id: string, path: string, instruction: string, model?: string) =>
+      request<ProposedEdit>(`/code/workspaces/${id}/propose`, {
+        method: "POST",
+        body: JSON.stringify({ path, instruction, ...(model ? { model } : {}) }),
+      }),
+  },
+
+  prompts: {
+    list: () => request<SavedPrompt[]>("/prompts"),
+    create: (data: {
+      title: string;
+      body: string;
+      slash?: string | null;
+      category?: string;
+      icon?: string;
+      is_shared?: boolean;
+    }) =>
+      request<SavedPrompt>("/prompts", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<SavedPrompt>) =>
+      request<SavedPrompt>(`/prompts/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    remove: (id: string) => request<void>(`/prompts/${id}`, { method: "DELETE" }),
+    recordUse: (id: string) =>
+      request<{ use_count: number }>(`/prompts/${id}/use`, { method: "POST" }),
+  },
+
+  search: {
+    project: (projectId: string, q: string) =>
+      request<ProjectSearchResult>(
+        `/projects/${projectId}/search?q=${encodeURIComponent(q)}`,
+      ),
+  },
+
+  insights: {
+    summary: (days = 30) =>
+      request<InsightsSummary>(`/insights/summary?days=${days}`),
+  },
+
+  control: {
+    recordEvent: (data: {
+      action: string;
+      target?: string | null;
+      summary: string;
+      approved?: boolean;
+      details?: Record<string, unknown>;
+    }) =>
+      request<{ recorded: boolean }>("/control/events", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  },
 };
+
+export interface PublicTenantSettings {
+  brand_name: string;
+  default_theme: "light" | "dark";
+  allow_theme_toggle: boolean;
+  accent_color: string | null;
+  logo_url: string | null;
+  assistant_dock_enabled?: boolean;
+}
+
+export interface DlpPattern {
+  label: string;
+  pattern: string;
+}
+
+export interface TenantSettings extends PublicTenantSettings {
+  overlay_enabled: boolean;
+  compliance_frameworks: string[];
+  data_residency: string;
+  audit_retention_days: number;
+  require_disclosure_banner: boolean;
+  disclosure_text: string;
+  dlp_enabled: boolean;
+  dlp_patterns: DlpPattern[];
+  assistant_dock_enabled: boolean;
+  computer_control_enabled: boolean;
+  agent_socket_url: string;
+  require_action_confirmation: boolean;
+}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cleanroom Overlay — Settings</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --bg-elev: #1e293b;
+        --border: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-fg: #0b1220;
+      }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 32px;
+        max-width: 540px;
+        margin-inline: auto;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 4px;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 28px;
+      }
+      label {
+        display: block;
+        margin-bottom: 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      input[type="text"],
+      input[type="url"],
+      input[type="password"],
+      select {
+        width: 100%;
+        background: var(--bg-elev);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+        margin-top: 6px;
+        outline: none;
+        box-sizing: border-box;
+      }
+      input:focus,
+      select:focus {
+        border-color: var(--accent);
+      }
+      button {
+        background: var(--accent);
+        color: var(--accent-fg);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 22px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .status {
+        margin-top: 14px;
+        font-size: 13px;
+        color: #34d399;
+      }
+      .status.err {
+        color: #f87171;
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Cleanroom Overlay</h1>
+    <div class="subtitle">
+      Connect this browser extension to your on-prem Cleanroom AI instance.
+    </div>
+
+    <label>
+      API URL
+      <input id="apiUrl" type="url" placeholder="http://cleanroom.internal:8000" />
+      <div class="hint">Your tenant's Cleanroom API base URL (no trailing slash).</div>
+    </label>
+
+    <label>
+      Access Token
+      <input id="token" type="password" placeholder="paste long-lived token" />
+      <div class="hint">Generated from your dashboard; sent as a Bearer token.</div>
+    </label>
+
+    <label>
+      Default Model
+      <input id="model" type="text" placeholder="leave empty to use first available" />
+    </label>
+
+    <label>
+      Theme
+      <select id="theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+    </label>
+
+    <div class="row">
+      <button id="save">Save</button>
+      <button id="test" class="secondary">Test connection</button>
+    </div>
+    <div id="status" class="status"></div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

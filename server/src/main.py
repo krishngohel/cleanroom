@@ -21,6 +21,13 @@ from .api.workflows import router as workflows_router
 from .api.admin import router as admin_router
 from .api.health import router as health_router
 from .api.audit import router as audit_router
+from .api.tenant import router as tenant_router
+from .api.projects import router as projects_router
+from .api.code import router as code_router
+from .api.prompts import router as prompts_router
+from .api.search import router as search_router
+from .api.insights import router as insights_router
+from .api.control import router as control_router
 
 log = structlog.get_logger()
 
@@ -85,6 +92,13 @@ app.include_router(workflows_router)
 app.include_router(admin_router)
 app.include_router(health_router)
 app.include_router(audit_router)
+app.include_router(tenant_router)
+app.include_router(projects_router)
+app.include_router(code_router)
+app.include_router(prompts_router)
+app.include_router(search_router)
+app.include_router(insights_router)
+app.include_router(control_router)
 
 
 @app.get("/metrics", include_in_schema=False)

@@ -24,5 +24,9 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
 
+    # Where personal (browser-uploaded) workspaces are stored on disk.
+    # Each user gets a subdirectory; each workspace gets a slug folder.
+    uploads_dir: str = "./uploads"
+
 
 settings = Settings()

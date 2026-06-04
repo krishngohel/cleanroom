@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Cleanroom Cowork",
+  "version": "0.1.0",
+  "description": "Compliance-grade Claude-style assistant for Excel, Word, Sheets, Docs. On-prem. SOC2 / HIPAA-ready. Your data never leaves your network.",
+  "minimum_chrome_version": "108",
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
+  "host_permissions": [
+    "https://*.office.com/*",
+    "https://*.officeapps.live.com/*",
+    "https://*.sharepoint.com/*",
+    "https://docs.google.com/*",
+    "http://localhost/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Toggle Cleanroom Cowork"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.office.com/*",
+        "https://*.officeapps.live.com/*",
+        "https://*.sharepoint.com/*",
+        "https://docs.google.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "toggle-overlay": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Toggle Cleanroom Cowork"
+    }
+  }
+}

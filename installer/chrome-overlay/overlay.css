@@ -1,0 +1,5 @@
+/* Minimal global reset just so the host element doesn't inherit weird margins
+   from the host page. The actual UI lives in a shadow root in content.js. */
+#cleanroom-overlay-host {
+  all: initial;
+}
