@@ -109,7 +109,7 @@ async def test_delete_project_cascades_files(client: AsyncClient, user_token: st
         files={"file": ("x.txt", io.BytesIO(b"hello"), "text/plain")},
         headers=headers,
     )
-    fid = upload.json()["id"]
+    assert upload.status_code == 201
     assert (await client.delete(f"/projects/{pid}", headers=headers)).status_code == 204
     # File should no longer be reachable
     assert (await client.get(f"/projects/{pid}", headers=headers)).status_code == 404

@@ -57,7 +57,7 @@ async def test_control_event_recorded_when_enabled(client: AsyncClient, admin_to
     )
     assert logs.status_code == 200
     items = logs.json()["logs"]
-    assert any(l["action"] == "control_click" for l in items)
+    assert any(entry["action"] == "control_click" for entry in items)
 
 
 @pytest.mark.asyncio

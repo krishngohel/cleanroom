@@ -49,9 +49,14 @@ def _is_text_file(p: Path) -> bool:
 
 
 def _safe_resolve(root: Path, rel: str) -> Path:
-    """Resolve `rel` under `root` and refuse anything that escapes."""
-    # Strip leading slashes so absolute-looking paths are still anchored under root.
-    rel = rel.lstrip("/\\")
+    """Resolve `rel` under `root` and refuse anything that escapes.
+
+    Backslashes are normalized to forward slashes before resolution so that
+    Windows-style attack strings (e.g. `..\\..\\windows\\system32`) are caught
+    on Linux too — otherwise the server would treat them as a single
+    unusual filename instead of a path traversal attempt.
+    """
+    rel = rel.replace("\\", "/").lstrip("/")
     candidate = (root / rel).resolve()
     try:
         candidate.relative_to(root.resolve())
