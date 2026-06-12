@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cleanroom AI — Private AI, On Your Terms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #FEFCF8;
+      --bg-alt:    #FDF7EF;
+      --white:     #FFFFFF;
+      --orange:    #F97316;
+      --orange-md: #FB923C;
+      --orange-lt: #FED7AA;
+      --orange-dim:rgba(249,115,22,0.09);
+      --sky:       #0EA5E9;
+      --sky-lt:    #7DD3FC;
+      --sky-dim:   rgba(14,165,233,0.09);
+      --green:     #10B981;
+      --text:      #1C1917;
+      --text2:     #57534E;
+      --text3:     #A8A29E;
+      --border:    #E7E5E4;
+      --shadow:    rgba(28,25,23,0.07);
+      --shadow-md: rgba(28,25,23,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    /* ──────────────────────────────────────
+       SCROLL PROGRESS SIDEBAR (desktop)
+    ────────────────────────────────────── */
+    .scroll-sidebar {
+      position: fixed;
+      left: 28px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .scroll-track {
+      position: relative;
+      width: 2px;
+      height: 260px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .scroll-fill {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 0%;
+      background: linear-gradient(180deg, var(--orange), var(--sky));
+      border-radius: 2px;
+      transition: height 0.15s ease;
+    }
+
+    .scroll-dots {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .sdot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transform: translateX(-4px);
+      transition: all 0.25s;
+      position: relative;
+    }
+
+    .sdot.active {
+      background: var(--orange);
+      border-color: var(--orange);
+      box-shadow: 0 0 0 4px var(--orange-dim);
+    }
+
+    .sdot .dot-tip {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text3);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .sdot.active .dot-tip {
+      color: var(--orange);
+      opacity: 1;
+    }
+
+    @media (max-width: 1100px) { .scroll-sidebar { display: none; } }
+
+    /* ──────────────────────────────────────
+       FLOATING PROGRESS PILL (all sizes)
+    ────────────────────────────────────── */
+    .scroll-pill {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 90;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 8px 16px 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px var(--shadow-md);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .scroll-pill.visible { opacity: 1; transform: translateY(0); }
+
+    .pill-ring {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .pill-ring circle { transition: stroke-dashoffset 0.2s ease; }
+
+    .pill-label {
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text2);
+      min-width: 80px;
+    }
+
+    /* ──────────────────────────────────────
+       NAVBAR
+    ────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 14px 40px;
+      background: rgba(254,252,248,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: box-shadow 0.3s;
+    }
+
+    nav.scrolled { box-shadow: 0 2px 20px var(--shadow); }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 17px;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--orange), var(--orange-md));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+    }
+
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text2);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta { display: flex; gap: 10px; align-items: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-text {
+      background: none;
+      color: var(--text2);
+      padding: 10px 16px;
+    }
+    .btn-text:hover { color: var(--text); }
+
+    .btn-orange {
+      background: var(--orange);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(249,115,22,0.28);
+    }
+    .btn-orange:hover {
+      background: #EA6C0A;
+      box-shadow: 0 6px 20px rgba(249,115,22,0.38);
+      transform: translateY(-1px);
+    }
+
+    .btn-sky {
+      background: var(--sky);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(14,165,233,0.25);
+    }
+    .btn-sky:hover {
+      background: #0898D7;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: var(--white);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .btn-lg { padding: 15px 32px; font-size: 16px; border-radius: 12px; }
+
+    @media (max-width: 768px) { .nav-links { display: none; } nav { padding: 14px 20px; } }
+
+    /* ──────────────────────────────────────
+       SECTIONS BASE
+    ────────────────────────────────────── */
+    section { padding: 112px 40px; }
+
+    .inner { max-width: 1180px; margin: 0 auto; }
+
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--orange);
+      margin-bottom: 16px;
+    }
+
+    .eyebrow-line {
+      width: 24px;
+      height: 2px;
+      background: var(--orange);
+      border-radius: 2px;
+    }
+
+    .section-title {
+      font-size: clamp(30px, 3.8vw, 52px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+
+    .section-sub {
+      font-size: 17px;
+      color: var(--text2);
+      line-height: 1.7;
+      max-width: 540px;
+    }
+
+    .section-head { margin-bottom: 72px; }
+    .section-head.center { text-align: center; }
+    .section-head.center .section-sub { margin: 0 auto; }
+
+    .accent-orange { color: var(--orange); }
+    .accent-sky { color: var(--sky); }
+
+    /* ──────────────────────────────────────
+       HERO
+    ────────────────────────────────────── */
+    .hero {
+      min-height: 100dvh;
+      padding: 140px 40px 80px;
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Soft background blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .blob-1 { width: 600px; height: 600px; background: rgba(249,115,22,0.07); top: -100px; right: -80px; }
+    .blob-2 { width: 500px; height: 500px; background: rgba(14,165,233,0.07); bottom: -80px; left: -80px; }
+    .blob-3 { width: 350px; height: 350px; background: rgba(249,115,22,0.05); top: 60%; left: 30%; }
+
+    .hero-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 72px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--orange-dim);
+      border: 1px solid var(--orange-lt);
+      color: var(--orange);
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin-bottom: 28px;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-pulse {
+      width: 7px; height: 7px;
+      background: var(--orange);
+      border-radius: 50%;
+      animation: bpulse 2s ease-in-out infinite;
+    }
+
+    @keyframes bpulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    .hero h1 {
+      font-size: clamp(38px, 5vw, 68px);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.06;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+
+    .hero h1 .hl {
+      background: linear-gradient(135deg, var(--orange) 0%, #F59E0B 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--text2);
+      line-height: 1.72;
+      max-width: 480px;
+      margin-bottom: 40px;
+    }
+
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 48px; }
+
+    .hero-trust {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text3);
+    }
+
+    .trust-icon {
+      width: 18px; height: 18px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ──────────────────────────────────────
+       LIGHT DASHBOARD MOCKUP
+    ────────────────────────────────────── */
+    .mockup-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(249,115,22,0.06),
+        0 32px 80px rgba(28,25,23,0.14),
+        0 8px 32px rgba(28,25,23,0.08);
+      transform: perspective(1000px) rotateY(-6deg) rotateX(2deg);
+      transition: transform 0.5s ease;
+    }
+
+    .mockup-card:hover {
+      transform: perspective(1000px) rotateY(-2deg) rotateX(1deg);
+    }
+
+    .mc-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 12px 18px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mcdot { width: 11px; height: 11px; border-radius: 50%; }
+
+    .mc-label {
+      font-size: 11px;
+      font-family: 'Inter', monospace;
+      color: var(--text3);
+      margin-left: 8px;
+    }
+
+    .mc-body {
+      display: grid;
+      grid-template-columns: 168px 1fr;
+      height: 360px;
+    }
+
+    .mc-sidebar {
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+    }
+
+    .mc-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0 8px;
+      margin-bottom: 8px;
+    }
+
+    .mc-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text3);
+      margin-bottom: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .mc-nav-item.active {
+      background: var(--orange-dim);
+      color: var(--orange);
+      font-weight: 600;
+    }
+
+    .mc-main {
+      display: flex;
+      flex-direction: column;
+      padding: 18px 20px;
+      overflow: hidden;
+    }
+
+    .mc-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mc-model-pill {
+      font-size: 10px;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--sky-dim);
+      color: var(--sky);
+      border: 1px solid rgba(14,165,233,0.2);
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+
+    .chat-area { flex: 1; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+
+    .chat-row { display: flex; gap: 9px; align-items: flex-start; }
+    .chat-row.user { flex-direction: row-reverse; }
+
+    .chat-ava {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .ava-u { background: linear-gradient(135deg, var(--orange), var(--orange-md)); }
+    .ava-a { background: linear-gradient(135deg, var(--sky), #38BDF8); }
+
+    .chat-bub {
+      max-width: 200px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .chat-row.user .chat-bub {
+      background: var(--orange-dim);
+      border: 1px solid var(--orange-lt);
+      color: var(--text);
+    }
+
+    .chat-row.ai .chat-bub {
+      background: var(--sky-dim);
+      border: 1px solid rgba(14,165,233,0.18);
+      color: var(--text2);
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: fit-content;
+    }
+
+    .td {
+      width: 5px; height: 5px;
+      background: var(--text3);
+      border-radius: 50%;
+      animation: td 1.3s ease-in-out infinite;
+    }
+    .td:nth-child(2) { animation-delay: 0.18s; }
+    .td:nth-child(3) { animation-delay: 0.36s; }
+
+    @keyframes td {
+      0%,80%,100% { transform: translateY(0); opacity: 0.3; }
+      40% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    .mc-status {
+      display: flex;
+      gap: 6px;
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .status-tag {
+      font-size: 9px;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .tag-orange { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(249,115,22,0.2); }
+    .tag-sky { background: var(--sky-dim); color: var(--sky); border: 1px solid rgba(14,165,233,0.2); }
+    .tag-green { background: rgba(16,185,129,0.08); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+
+    /* Hero scroll hint */
+    .scroll-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.45;
+      animation: shint 2.5s ease-in-out infinite;
+    }
+
+    @keyframes shint {
+      0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.45; }
+      50% { transform: translateX(-50%) translateY(6px); opacity: 0.7; }
+    }
+
+    .scroll-hint span {
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text3);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 1024px) {
+      .hero-inner { grid-template-columns: 1fr; text-align: center; gap: 48px; }
+      .hero-actions, .hero-trust { justify-content: center; }
+      .hero-sub { margin: 0 auto 40px; }
+      .mockup-card { transform: none !important; max-width: 480px; margin: 0 auto; }
+    }
+
+    /* ──────────────────────────────────────
+       PAIN POINTS (new section)
+    ────────────────────────────────────── */
+    .pain-section {
+      background: var(--bg-alt);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 80px 40px;
+    }
+
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 56px;
+    }
+
+    .pain-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      box-shadow: 0 2px 16px var(--shadow);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .pain-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px var(--shadow-md); }
+
+    .pain-emoji-wrap {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 0; /* no emoji icon — SVG only */
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+    }
+
+    .pain-emoji-wrap svg { width: 26px; height: 26px; }
+
+    .pain-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.015em;
+    }
+
+    .pain-card p { font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+    @media (max-width: 768px) { .pain-grid { grid-template-columns: 1fr; } }
+
+    /* ──────────────────────────────────────
+       FEATURES
+    ────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 22px;
+    }
+
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 34px;
+      box-shadow: 0 2px 12px var(--shadow);
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--orange), var(--sky));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 48px var(--shadow-md);
+      border-color: var(--orange-lt);
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    .feat-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      border: 1.5px solid;
+    }
+
+    .feat-icon svg { width: 24px; height: 24px; }
+
+    .fi-orange { background: var(--orange-dim); color: var(--orange); border-color: rgba(249,115,22,0.2); }
+    .fi-sky { background: var(--sky-dim); color: var(--sky); border-color: rgba(14,165,233,0.2); }
+    .fi-green { background: rgba(16,185,129,0.08); color: var(--green); border-color: rgba(16,185,129,0.2); }
+    .fi-amber { background: rgba(245,158,11,0.09); color: #D97706; border-color: rgba(245,158,11,0.2); }
+    .fi-rose { background: rgba(244,63,94,0.08); color: #E11D48; border-color: rgba(244,63,94,0.2); }
+    .fi-violet { background: rgba(139,92,246,0.09); color: #7C3AED; border-color: rgba(139,92,246,0.2); }
+
+    .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.015em; }
+    .feature-card p { font-size: 14px; color: var(--text2); line-height: 1.68; }
+
+    /* ──────────────────────────────────────
+       HOW IT WORKS
+    ────────────────────────────────────── */
+    .how-section {
+      background: var(--bg-alt);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
+      position: relative;
+    }
+
+    .how-connector {
+      position: absolute;
+      top: 36px;
+      left: calc(100%/6 + 12px);
+      right: calc(100%/6 + 12px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--orange), var(--sky));
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    .how-step { text-align: center; padding: 0 16px; }
+
+    .how-num {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--white);
+      border: 2px solid var(--border);
+      color: var(--text3);
+      position: relative;
+      z-index: 1;
+      transition: all 0.4s;
+      box-shadow: 0 4px 16px var(--shadow);
+    }
+
+    .how-num.lit {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(249,115,22,0.32);
+    }
+
+    .how-step h3 { font-size: 19px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.015em; }
+    .how-step p { font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+    .code-pill {
+      display: inline-block;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--orange);
+      font-family: 'Inter', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 768px) {
+      .how-grid { grid-template-columns: 1fr; gap: 40px; }
+      .how-connector { display: none; }
+    }
+
+    /* ──────────────────────────────────────
+       USE CASES
+    ────────────────────────────────────── */
+    .usecases-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+    }
+
+    .uc-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      box-shadow: 0 2px 12px var(--shadow);
+      transition: all 0.3s;
+    }
+
+    .uc-card:hover {
+      border-color: var(--sky-lt);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px var(--shadow-md);
+    }
+
+    .uc-icon {
+      width: 56px; height: 56px;
+      flex-shrink: 0;
+      border-radius: 16px;
+      background: var(--sky-dim);
+      border: 1.5px solid rgba(14,165,233,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .uc-icon svg { width: 26px; height: 26px; color: var(--sky); }
+
+    .uc-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.015em; }
+    .uc-card p { font-size: 14px; color: var(--text2); line-height: 1.65; }
+
+    .tag-row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 12px; }
+
+    .ctag {
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text3);
+    }
+
+    @media (max-width: 768px) { .usecases-grid { grid-template-columns: 1fr; } }
+
+    /* ──────────────────────────────────────
+       PRICING
+    ────────────────────────────────────── */
+    .pricing-section {
+      background: var(--bg-alt);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .pc {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      padding: 36px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px var(--shadow);
+      position: relative;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .pc:hover { transform: translateY(-5px); box-shadow: 0 24px 56px var(--shadow-md); }
+
+    .pc.best {
+      border-color: var(--orange);
+      box-shadow: 0 8px 40px rgba(249,115,22,0.15);
+    }
+
+    .best-badge {
+      position: absolute;
+      top: -13px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--orange);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 4px 18px;
+      border-radius: 100px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+    }
+
+    .pc-tier {
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text3);
+      margin-bottom: 16px;
+    }
+
+    .pc-price {
+      display: flex;
+      align-items: baseline;
+      gap: 3px;
+      margin-bottom: 4px;
+    }
+
+    .pc-curr { font-size: 20px; font-weight: 700; color: var(--text2); font-family: 'Plus Jakarta Sans', sans-serif; }
+    .pc-amt { font-size: 56px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .pc-per { font-size: 14px; color: var(--text3); align-self: flex-end; margin-bottom: 4px; }
+
+    .pc-desc {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.55;
+      margin-bottom: 28px;
+      min-height: 44px;
+    }
+
+    .pc-divider { height: 1px; background: var(--border); margin-bottom: 24px; }
+
+    .pc-feats { list-style: none; margin-bottom: 28px; flex: 1; }
+
+    .pc-feats li {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 11px;
+      line-height: 1.45;
+    }
+
+    .chk { color: var(--green); flex-shrink: 0; font-size: 15px; }
+    .chk-dim { color: var(--text3); flex-shrink: 0; font-size: 15px; }
+    li.dim { color: var(--text3); }
+
+    @media (max-width: 900px) {
+      .pricing-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+    }
+
+    /* ──────────────────────────────────────
+       FAQ
+    ────────────────────────────────────── */
+    .faq-list { max-width: 680px; margin: 0 auto; }
+
+    .faq-item { border-bottom: 1.5px solid var(--border); }
+
+    .faq-btn {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: left;
+      padding: 22px 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      transition: color 0.2s;
+      letter-spacing: -0.01em;
+    }
+
+    .faq-btn:hover { color: var(--orange); }
+
+    .faq-chevron {
+      flex-shrink: 0;
+      transition: transform 0.3s;
+      color: var(--text3);
+    }
+
+    .faq-item.open .faq-chevron { transform: rotate(180deg); color: var(--orange); }
+
+    .faq-body {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.78;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.35s;
+    }
+
+    .faq-item.open .faq-body { max-height: 300px; padding-bottom: 22px; }
+
+    /* ──────────────────────────────────────
+       CTA BANNER
+    ────────────────────────────────────── */
+    .cta-section { padding: 80px 40px; }
+
+    .cta-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, var(--orange) 0%, #F59E0B 100%);
+      border-radius: 28px;
+      padding: 72px 64px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(249,115,22,0.3);
+    }
+
+    .cta-blob1 {
+      position: absolute;
+      width: 300px; height: 300px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      filter: blur(60px);
+      top: -80px; right: -60px;
+    }
+
+    .cta-blob2 {
+      position: absolute;
+      width: 250px; height: 250px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+      filter: blur(50px);
+      bottom: -60px; left: -40px;
+    }
+
+    .cta-wrap h2 {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #fff;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-wrap p {
+      font-size: 17px;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-btns {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-white {
+      background: #fff;
+      color: var(--orange);
+      font-weight: 700;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    .btn-white:hover { background: #FFF7F0; transform: translateY(-1px); }
+
+    .btn-ghost-white {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .btn-ghost-white:hover { background: rgba(255,255,255,0.25); }
+
+    @media (max-width: 640px) { .cta-wrap { padding: 48px 24px; } }
+
+    /* ──────────────────────────────────────
+       FOOTER
+    ────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 40px;
+      background: var(--white);
+    }
+
+    .footer-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .footer-left { display: flex; align-items: center; gap: 16px; }
+    .footer-tagline { font-size: 13px; color: var(--text3); }
+
+    .footer-links { display: flex; gap: 24px; list-style: none; }
+    .footer-links a { font-size: 14px; color: var(--text3); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-copy { font-size: 13px; color: var(--text3); }
+
+    /* ──────────────────────────────────────
+       SCROLL REVEAL ANIMATIONS
+    ────────────────────────────────────── */
+    .rv {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+
+    .rv.in { opacity: 1; transform: translateY(0); }
+
+    .rv-l {
+      opacity: 0;
+      transform: translateX(-32px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .rv-l.in { opacity: 1; transform: translateX(0); }
+
+    .rv-r {
+      opacity: 0;
+      transform: translateX(32px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .rv-r.in { opacity: 1; transform: translateX(0); }
+
+    .d1 { transition-delay: 0.1s; }
+    .d2 { transition-delay: 0.2s; }
+    .d3 { transition-delay: 0.3s; }
+    .d4 { transition-delay: 0.4s; }
+    .d5 { transition-delay: 0.5s; }
+
+    /* ──────────────────────────────────────
+       STATS STRIP
+    ────────────────────────────────────── */
+    .stats-strip {
+      padding: 48px 40px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--white);
+    }
+
+    .stats-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 32px;
+    }
+
+    .stat-item { text-align: center; }
+
+    .stat-val {
+      font-size: 42px;
+      font-weight: 800;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--orange);
+    }
+
+    .stat-val.sky { color: var(--sky); }
+
+    .stat-lbl {
+      font-size: 13px;
+      color: var(--text3);
+      font-weight: 500;
+      margin-top: 6px;
+    }
+
+    /* reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .rv, .rv-l, .rv-r { opacity: 1; transform: none; transition: none; }
+      .blob { animation: none; }
+      .scroll-hint { animation: none; }
+      .badge-pulse { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SCROLL SIDEBAR (desktop) ── -->
+<div class="scroll-sidebar" id="scrollSidebar">
+  <div class="scroll-track">
+    <div class="scroll-fill" id="scrollFill"></div>
+    <div class="scroll-dots" id="scrollDots">
+      <div class="sdot active" data-target="hero"><span class="dot-tip">Welcome</span></div>
+      <div class="sdot" data-target="pain"><span class="dot-tip">The Problem</span></div>
+      <div class="sdot" data-target="features"><span class="dot-tip">Features</span></div>
+      <div class="sdot" data-target="how"><span class="dot-tip">How It Works</span></div>
+      <div class="sdot" data-target="pricing"><span class="dot-tip">Pricing</span></div>
+      <div class="sdot" data-target="faq"><span class="dot-tip">FAQ</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FLOATING PROGRESS PILL ── -->
+<div class="scroll-pill" id="scrollPill">
+  <svg class="pill-ring" viewBox="0 0 28 28">
+    <circle cx="14" cy="14" r="11" fill="none" stroke="#E7E5E4" stroke-width="2"/>
+    <circle id="pillCircle" cx="14" cy="14" r="11" fill="none"
+      stroke="#F97316" stroke-width="2"
+      stroke-dasharray="69.1" stroke-dashoffset="69.1"
+      stroke-linecap="round"
+      transform="rotate(-90 14 14)"/>
+  </svg>
+  <div class="pill-label" id="pillLabel">Welcome</div>
+</div>
+
+<!-- ── NAV ── -->
+<nav id="main-nav">
+  <a href="#hero" class="nav-logo">
+    <div class="logo-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    Cleanroom AI
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="#" class="btn btn-text">GitHub</a>
+    <a href="#pricing" class="btn btn-orange">Get Started</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero" id="hero">
+  <div class="blob blob-1" id="blob1"></div>
+  <div class="blob blob-2" id="blob2"></div>
+  <div class="blob blob-3" id="blob3"></div>
+
+  <div class="hero-inner">
+    <!-- Left -->
+    <div class="rv-l">
+      <div class="hero-badge">
+        <div class="badge-pulse"></div>
+        OpenAI-Compatible · 100% On-Premise
+      </div>
+      <h1>
+        Keep Your AI<br>
+        Where Your<br>
+        <span class="hl">Data Lives.</span>
+      </h1>
+      <p class="hero-sub">
+        Cleanroom AI is the private AI platform built for teams who can't risk sending sensitive data to the cloud. Chat, analyze, and automate — all inside your own infrastructure.
+      </p>
+      <div class="hero-actions">
+        <a href="#pricing" class="btn btn-orange btn-lg">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Deploy Free
+        </a>
+        <a href="#how" class="btn btn-outline btn-lg">See How It Works</a>
+      </div>
+      <div class="hero-trust">
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          Self-hosted, zero lock-in
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          HIPAA-ready architecture
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          Full audit trail included
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Light Mockup -->
+    <div class="rv-r">
+      <div class="mockup-card">
+        <div class="mc-bar">
+          <div class="mcdot" style="background:#ef4444"></div>
+          <div class="mcdot" style="background:#f59e0b"></div>
+          <div class="mcdot" style="background:#10b981"></div>
+          <span class="mc-label">Cleanroom AI · Private Chat</span>
+        </div>
+        <div class="mc-body">
+          <div class="mc-sidebar">
+            <div class="mc-section-label">Workspace</div>
+            <div class="mc-nav-item active">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Chat
+            </div>
+            <div class="mc-nav-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Workflows
+            </div>
+            <div class="mc-nav-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              Connectors
+            </div>
+            <div class="mc-nav-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Audit Log
+            </div>
+            <div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--border);margin-top:24px">
+              <div class="mc-nav-item" style="font-size:11px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;display:inline-block"></span>
+                On-premise · Secure
+              </div>
+            </div>
+          </div>
+          <div class="mc-main">
+            <div class="mc-topbar">
+              <span style="font-size:12px;font-weight:600;color:var(--text2);">AI Chat</span>
+              <span class="mc-model-pill">llama3.2:latest</span>
+            </div>
+            <div class="chat-area">
+              <div class="chat-row user">
+                <div class="chat-ava ava-u"></div>
+                <div class="chat-bub">Summarize Q4 financials from our SQL database</div>
+              </div>
+              <div class="chat-row ai">
+                <div class="chat-ava ava-a"></div>
+                <div class="chat-bub">Querying your private database... Q4 revenue was $2.4M, up 18% YoY. Top segment: Enterprise at 64% of ARR.</div>
+              </div>
+              <div class="chat-row user">
+                <div class="chat-ava ava-u"></div>
+                <div class="chat-bub">Draft an executive summary slide</div>
+              </div>
+              <div class="chat-row ai">
+                <div class="chat-ava ava-a"></div>
+                <div class="typing-dots">
+                  <div class="td"></div><div class="td"></div><div class="td"></div>
+                </div>
+              </div>
+            </div>
+            <div class="mc-status">
+              <span class="status-tag tag-orange">&#9632; local model</span>
+              <span class="status-tag tag-green">&#10003; on-premise</span>
+              <span class="status-tag tag-sky">&#9671; audit logged</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scroll to explore</span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+</section>
+
+<!-- ── STATS ── -->
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div class="stat-item rv">
+      <div class="stat-val" data-target="100" data-suffix="%">0%</div>
+      <div class="stat-lbl">Data stays on-premise</div>
+    </div>
+    <div class="stat-item rv d1">
+      <div class="stat-val sky">OpenAI</div>
+      <div class="stat-lbl">Compatible API</div>
+    </div>
+    <div class="stat-item rv d2">
+      <div class="stat-val" data-target="6" data-suffix="">0</div>
+      <div class="stat-lbl">Core platform features</div>
+    </div>
+    <div class="stat-item rv d3">
+      <div class="stat-val sky">1 cmd</div>
+      <div class="stat-lbl">To deploy the full stack</div>
+    </div>
+    <div class="stat-item rv d4">
+      <div class="stat-val">Full</div>
+      <div class="stat-lbl">Compliance audit trail</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIN POINTS ── -->
+<div class="pain-section" id="pain">
+  <div class="inner">
+    <div class="section-head rv">
+      <div class="section-eyebrow"><div class="eyebrow-line"></div>The Problem</div>
+      <h2 class="section-title">Why teams like yours<br>can't use public AI</h2>
+      <p class="section-sub">Sending sensitive data to OpenAI, Anthropic, or Google creates real legal, compliance, and competitive risk. These aren't theoretical concerns.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card rv d1">
+        <div class="pain-emoji-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2" stroke-linecap="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h3>Your data trains their models</h3>
+        <p>Most commercial AI providers use your prompts and data to improve their models. Patient records, contracts, and financials sent to the cloud become training data you can't recall.</p>
+      </div>
+      <div class="pain-card rv d2">
+        <div class="pain-emoji-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h3>Compliance becomes a liability</h3>
+        <p>HIPAA, SOC 2, PCI DSS, and GDPR all have strict rules about data leaving your control. Every cloud AI call is a potential audit finding — or a breach notification.</p>
+      </div>
+      <div class="pain-card rv d3">
+        <div class="pain-emoji-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round">
+            <rect x="1" y="3" width="15" height="13" rx="2"/>
+            <path d="M16 8h4a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-4"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+          </svg>
+        </div>
+        <h3>No visibility into what's happening</h3>
+        <p>Who on your team queried what? When? With which data? Cloud AI gives you zero audit trail for access, prompts, or outputs — a nightmare for regulated industries.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FEATURES ── -->
+<section id="features">
+  <div class="inner">
+    <div class="section-head rv">
+      <div class="section-eyebrow"><div class="eyebrow-line"></div>Platform Features</div>
+      <h2 class="section-title">Everything you need.<br>Nothing leaves your walls.</h2>
+      <p class="section-sub">A complete private AI platform — from chat to workflows to data connectors — built for teams who need full control.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card rv d1">
+        <div class="feat-icon fi-orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>100% On-Premise Deployment</h3>
+        <p>Deploy on your own servers, VPC, or air-gapped network. Your data, prompts, and model outputs never touch an external API. Zero lock-in, full control.</p>
+      </div>
+      <div class="feature-card rv d2">
+        <div class="feat-icon fi-sky">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <h3>OpenAI-Compatible API</h3>
+        <p>Drop-in replacement for OpenAI's API. Works with LangChain, LlamaIndex, and any tool that speaks the OpenAI protocol — no code changes required.</p>
+      </div>
+      <div class="feature-card rv d3">
+        <div class="feat-icon fi-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <h3>Private Data Connectors</h3>
+        <p>Connect to SQL databases and filesystems. Let your AI query private data in-place — no ETL pipelines, no data movement, no exposure risk at all.</p>
+      </div>
+      <div class="feature-card rv d1">
+        <div class="feat-icon fi-amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>Workflow Automation Engine</h3>
+        <p>Build multi-step AI workflows with reusable YAML templates. Automate summarization, classification, and data extraction pipelines end-to-end.</p>
+      </div>
+      <div class="feature-card rv d2">
+        <div class="feat-icon fi-rose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <h3>Full Compliance Audit Log</h3>
+        <p>Every chat, workflow run, and model call is logged with user, IP, timestamp, and resource. Meet HIPAA, SOC 2, and SOX requirements out of the box.</p>
+      </div>
+      <div class="feature-card rv d3">
+        <div class="feat-icon fi-violet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <h3>Any Local Model, Instantly</h3>
+        <p>Run Llama 3.2, Mistral, Gemma, CodeLlama, Qwen, and hundreds more via Ollama. Hot-swap models with no downtime. No cloud GPU costs, ever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="how-section" id="how">
+  <div class="inner">
+    <div class="section-head center rv">
+      <div class="section-eyebrow"><div class="eyebrow-line"></div>Setup Process</div>
+      <h2 class="section-title">Up and running in minutes</h2>
+      <p class="section-sub">Cleanroom AI ships as a Docker Compose stack. One command gives your entire team a fully private AI platform.</p>
+    </div>
+    <div class="how-grid">
+      <div class="how-connector"></div>
+      <div class="how-step rv">
+        <div class="how-num lit">1</div>
+        <h3>Deploy the Stack</h3>
+        <p>Run <span class="code-pill">make dev</span> to start FastAPI, PostgreSQL, Redis, and Ollama via Docker Compose. Works on any Linux server, Mac, or cloud VM.</p>
+      </div>
+      <div class="how-step rv d2">
+        <div class="how-num">2</div>
+        <h3>Connect Your Data</h3>
+        <p>Add SQL or filesystem connectors through the admin panel. Cleanroom queries your data in-place — nothing is ever copied to an external service.</p>
+      </div>
+      <div class="how-step rv d4">
+        <div class="how-num">3</div>
+        <h3>Chat, Build, Automate</h3>
+        <p>Your team chats with private AI, admins build workflows, and developers plug into the OpenAI-compatible API to build internal tools — all on your network.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── USE CASES ── -->
+<section id="usecases">
+  <div class="inner">
+    <div class="section-head rv">
+      <div class="section-eyebrow"><div class="eyebrow-line"></div>Who Uses Cleanroom</div>
+      <h2 class="section-title">Built for industries<br>that can't afford leaks</h2>
+      <p class="section-sub">When your data is your liability, you need AI that stays in-house. Here are the teams that choose Cleanroom.</p>
+    </div>
+    <div class="usecases-grid">
+      <div class="uc-card rv d1">
+        <div class="uc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div>
+          <h3>Healthcare &amp; Life Sciences</h3>
+          <p>Analyze patient records, summarize clinical notes, and run diagnostic workflows — without PHI ever leaving your network. HIPAA-ready architecture built in.</p>
+          <div class="tag-row">
+            <span class="ctag">HIPAA</span>
+            <span class="ctag">PHI Protection</span>
+            <span class="ctag">Clinical NLP</span>
+          </div>
+        </div>
+      </div>
+      <div class="uc-card rv d2">
+        <div class="uc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <h3>Legal &amp; Compliance</h3>
+          <p>Review contracts, research case law, and generate legal summaries with complete confidentiality. Attorney-client privilege and work product protection stay intact.</p>
+          <div class="tag-row">
+            <span class="ctag">Contract Review</span>
+            <span class="ctag">eDiscovery</span>
+            <span class="ctag">SOC 2</span>
+          </div>
+        </div>
+      </div>
+      <div class="uc-card rv d1">
+        <div class="uc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <div>
+          <h3>Financial Services</h3>
+          <p>Process financial reports, automate compliance checks, and analyze proprietary data without regulatory risk. Full audit trail meets SEC and FINRA requirements.</p>
+          <div class="tag-row">
+            <span class="ctag">PCI DSS</span>
+            <span class="ctag">SOX</span>
+            <span class="ctag">Audit Logging</span>
+          </div>
+        </div>
+      </div>
+      <div class="uc-card rv d2">
+        <div class="uc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <h3>Government &amp; Defense</h3>
+          <p>Run AI on classified networks with full air-gap capability. No internet required after deployment. Built to operate in the most restricted environments on earth.</p>
+          <div class="tag-row">
+            <span class="ctag">Air-Gap Ready</span>
+            <span class="ctag">FedRAMP</span>
+            <span class="ctag">ITAR</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRICING ── -->
+<section class="pricing-section" id="pricing">
+  <div class="inner">
+    <div class="section-head center rv">
+      <div class="section-eyebrow"><div class="eyebrow-line"></div>Pricing</div>
+      <h2 class="section-title">Simple, transparent pricing</h2>
+      <p class="section-sub">Start free. Scale when you're ready. No per-token fees — ever. You own the models, you own the data.</p>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- Community -->
+      <div class="pc rv d1">
+        <div class="pc-tier">Community</div>
+        <div class="pc-price"><span class="pc-amt">Free</span></div>
+        <div class="pc-desc">Self-hosted, open source. Forever free for individuals and small teams exploring private AI.</div>
+        <div class="pc-divider"></div>
+        <ul class="pc-feats">
+          <li><span class="chk">✓</span> 1 admin user</li>
+          <li><span class="chk">✓</span> Unlimited local AI models</li>
+          <li><span class="chk">✓</span> OpenAI-compatible API</li>
+          <li><span class="chk">✓</span> Chat interface</li>
+          <li><span class="chk">✓</span> SQL + filesystem connectors</li>
+          <li class="dim"><span class="chk-dim">–</span> Workflow engine</li>
+          <li class="dim"><span class="chk-dim">–</span> Audit logging</li>
+          <li class="dim"><span class="chk-dim">–</span> Priority support</li>
+        </ul>
+        <a href="#" class="btn btn-outline" style="width:100%;justify-content:center;">Deploy Free</a>
+      </div>
+
+      <!-- Team -->
+      <div class="pc best rv d2">
+        <div class="best-badge">Most Popular</div>
+        <div class="pc-tier">Team</div>
+        <div class="pc-price">
+          <span class="pc-curr">$</span>
+          <span class="pc-amt">149</span>
+          <span class="pc-per">/month</span>
+        </div>
+        <div class="pc-desc">For engineering and data teams who need collaboration tools and compliance-ready logging.</div>
+        <div class="pc-divider"></div>
+        <ul class="pc-feats">
+          <li><span class="chk">✓</span> Up to 25 users</li>
+          <li><span class="chk">✓</span> Unlimited local AI models</li>
+          <li><span class="chk">✓</span> OpenAI-compatible API</li>
+          <li><span class="chk">✓</span> Full dashboard</li>
+          <li><span class="chk">✓</span> SQL + filesystem connectors</li>
+          <li><span class="chk">✓</span> Workflow engine + templates</li>
+          <li><span class="chk">✓</span> Audit logs + Prometheus metrics</li>
+          <li><span class="chk">✓</span> Email support (48h SLA)</li>
+        </ul>
+        <a href="#" class="btn btn-orange" style="width:100%;justify-content:center;">Start Team Plan</a>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="pc rv d3">
+        <div class="pc-tier">Enterprise</div>
+        <div class="pc-price">
+          <span class="pc-curr">$</span>
+          <span class="pc-amt">599</span>
+          <span class="pc-per">/month</span>
+        </div>
+        <div class="pc-desc">For regulated industries and deployments that demand the highest compliance bar.</div>
+        <div class="pc-divider"></div>
+        <ul class="pc-feats">
+          <li><span class="chk">✓</span> Unlimited users</li>
+          <li><span class="chk">✓</span> Unlimited local AI models</li>
+          <li><span class="chk">✓</span> SSO / SAML integration</li>
+          <li><span class="chk">✓</span> Custom data connectors</li>
+          <li><span class="chk">✓</span> Advanced workflow builder</li>
+          <li><span class="chk">✓</span> Full audit + compliance reports</li>
+          <li><span class="chk">✓</span> 99.9% SLA + dedicated support</li>
+          <li><span class="chk">✓</span> Air-gap deployment option</li>
+        </ul>
+        <a href="mailto:sales@cleanroom.ai" class="btn btn-sky" style="width:100%;justify-content:center;">Contact Sales</a>
+      </div>
+    </div>
+
+    <div class="rv d2" style="margin-top:32px;text-align:center;padding:36px;border:1.5px solid var(--border);border-radius:20px;background:var(--white);box-shadow:0 2px 12px var(--shadow);">
+      <h3 style="font-size:20px;font-weight:700;margin-bottom:8px;letter-spacing:-0.015em;">Need air-gapped or custom deployment?</h3>
+      <p style="color:var(--text2);margin-bottom:22px;font-size:14px;">Full offline capability, custom connectors, HIPAA / FedRAMP / SOC 2 compliance packages, and a dedicated deployment engineer.</p>
+      <a href="mailto:hello@cleanroom.ai" class="btn btn-outline">Talk to our engineering team &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ── -->
+<section id="faq">
+  <div class="inner">
+    <div class="section-head center rv">
+      <div class="section-eyebrow"><div class="eyebrow-line"></div>FAQ</div>
+      <h2 class="section-title">Common questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item rv">
+        <button class="faq-btn" onclick="toggleFaq(this)">
+          Does Cleanroom AI ever send data to the cloud?
+          <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-body">No. All inference runs locally via Ollama on your own hardware. Your data, prompts, and model outputs never leave your network. There is no telemetry, no data collection, and no cloud dependencies after the initial Docker image download.</div>
+      </div>
+      <div class="faq-item rv d1">
+        <button class="faq-btn" onclick="toggleFaq(this)">
+          What AI models can I run?
+          <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-body">Any model in Ollama's library — including Llama 3.2, Mistral, Gemma, CodeLlama, Phi-3, Qwen, DeepSeek, and hundreds more. You can run multiple models simultaneously and switch between them per-conversation with no restart required.</div>
+      </div>
+      <div class="faq-item rv d2">
+        <button class="faq-btn" onclick="toggleFaq(this)">
+          Is it compatible with my existing OpenAI-based tools?
+          <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-body">Yes. Cleanroom AI exposes a fully OpenAI-compatible REST API. Just point your existing tools at your Cleanroom server URL and update the API key — no other code changes required. Works with LangChain, LlamaIndex, the OpenAI Python and Node SDKs, and more.</div>
+      </div>
+      <div class="faq-item rv d3">
+        <button class="faq-btn" onclick="toggleFaq(this)">
+          What hardware do I need?
+          <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-body">The API server and dashboard run on any modern machine with 4GB RAM. For AI inference, 8GB RAM handles 7B parameter models comfortably on CPU. For faster throughput, an NVIDIA GPU with 8GB+ VRAM is recommended. We support both GPU and CPU inference.</div>
+      </div>
+      <div class="faq-item rv d4">
+        <button class="faq-btn" onclick="toggleFaq(this)">
+          Can I deploy to an air-gapped environment?
+          <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-body">Yes. Enterprise customers get a fully offline installation package — pre-pulled Docker images and model weights bundled for physical media transfer. No internet access is required after installation. Contact us for air-gap deployment support.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA BANNER ── -->
+<div class="cta-section">
+  <div class="cta-wrap rv">
+    <div class="cta-blob1"></div>
+    <div class="cta-blob2"></div>
+    <h2>Ready to take back<br>control of your AI?</h2>
+    <p>Deploy in minutes. No cloud accounts. No data agreements.<br>Just your AI, running on your servers.</p>
+    <div class="cta-btns">
+      <a href="#pricing" class="btn btn-white btn-lg">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Deploy Free
+      </a>
+      <a href="mailto:hello@cleanroom.ai" class="btn btn-ghost-white btn-lg">Talk to us &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <a href="#hero" class="nav-logo">
+        <div class="logo-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        Cleanroom AI
+      </a>
+      <span class="footer-tagline">Private AI, on your terms.</span>
+    </div>
+    <ul class="footer-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="mailto:hello@cleanroom.ai">Contact</a></li>
+    </ul>
+    <div class="footer-copy">&copy; 2026 Cleanroom AI</div>
+  </div>
+</footer>
+
+<script>
+  // ── Section tracking ──
+  const sections = [
+    { id: 'hero',     label: 'Welcome' },
+    { id: 'pain',     label: 'The Problem' },
+    { id: 'features', label: 'Features' },
+    { id: 'how',      label: 'How It Works' },
+    { id: 'pricing',  label: 'Pricing' },
+    { id: 'faq',      label: 'FAQ' },
+  ];
+
+  const dots = document.querySelectorAll('.sdot');
+  const fillEl = document.getElementById('scrollFill');
+  const pillEl = document.getElementById('scrollPill');
+  const pillCircle = document.getElementById('pillCircle');
+  const pillLabel = document.getElementById('pillLabel');
+  const nav = document.getElementById('main-nav');
+  const circumference = 69.1;
+
+  let activeSectionIndex = 0;
+  let ticking = false;
+
+  function getScrollProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    return docHeight > 0 ? scrollTop / docHeight : 0;
+  }
+
+  function getActiveSectionIndex() {
+    const mid = window.scrollY + window.innerHeight * 0.45;
+    let active = 0;
+    for (let i = 0; i < sections.length; i++) {
+      const el = document.getElementById(sections[i].id);
+      if (el && el.offsetTop <= mid) active = i;
+    }
+    return active;
+  }
+
+  function updateScroll() {
+    const progress = getScrollProgress();
+    const idx = getActiveSectionIndex();
+
+    // Fill sidebar line
+    fillEl.style.height = (progress * 100) + '%';
+
+    // Update dots
+    dots.forEach((d, i) => {
+      d.classList.toggle('active', i === idx);
+    });
+
+    // Update pill
+    const offset = circumference - (progress * circumference);
+    pillCircle.style.strokeDashoffset = offset;
+    pillLabel.textContent = sections[idx]?.label || '';
+
+    // Show pill after first scroll
+    if (window.scrollY > 120) pillEl.classList.add('visible');
+
+    // Nav shadow
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+
+    // Parallax blobs
+    const sy = window.scrollY;
+    document.getElementById('blob1').style.transform = `translateY(${sy * -0.12}px)`;
+    document.getElementById('blob2').style.transform = `translateY(${sy * 0.08}px)`;
+    document.getElementById('blob3').style.transform = `translateY(${sy * -0.06}px)`;
+
+    // Light up how-steps as they scroll in
+    document.querySelectorAll('.how-num:not(.lit)').forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.7) el.classList.add('lit');
+    });
+
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(updateScroll);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  // Dot click to jump section
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      const el = document.getElementById(sections[i].id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // ── Intersection Observer: reveal ──
+  const revealIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.rv, .rv-l, .rv-r').forEach(el => revealIO.observe(el));
+
+  // ── Counter animation ──
+  const counterIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      if (isNaN(target)) return;
+      const t0 = performance.now();
+      const dur = 1100;
+      const tick = (now) => {
+        const p = Math.min((now - t0) / dur, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(target * ease) + suffix;
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+      counterIO.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('[data-target]').forEach(el => counterIO.observe(el));
+
+  // ── FAQ ──
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+  // ── Hero immediate reveal ──
+  setTimeout(() => {
+    document.querySelectorAll('.hero .rv-l, .hero .rv-r').forEach(el => el.classList.add('in'));
+  }, 80);
+
+  // Initial call
+  updateScroll();
+</script>
+</body>
+</html>
