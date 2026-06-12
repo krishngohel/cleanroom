@@ -10,6 +10,9 @@ This is not a cloud AI subscription. It is the infrastructure that makes AI safe
 
 ## Key Features
 
+- **Cleanroom Agent** — delegate whole tasks: the agent plans steps, reads intranet pages, edits workspace files, runs workflows, and reports back with a live task list — like a cloud AI agent, but entirely on-prem
+- **Hardware auto-configuration** — on startup the server probes GPU / VRAM / RAM / CPU and automatically serves the best model the box can run, tuned for context size, GPU offload, and keep-alive; admins can override from the dashboard
+- **Scheduled tasks** — recurring agent jobs (morning digests, weekly report generation) that run inside your network
 - **OpenAI-compatible API** — any tool built for ChatGPT points at your local server instead with no changes
 - **Data connectors** — file systems, SQL databases, SharePoint (coming), and REST APIs
 - **Pre-built workflow templates** — financial summaries, contract review, meeting summaries, HR policy lookup
@@ -66,13 +69,16 @@ bash installer/install.sh
 
 ## Model Selection
 
+**Automatic (default):** Cleanroom detects your hardware at startup and picks the best model it can serve well — a 4×A100 box gets `llama3.1:70b`, a single RTX 3090 gets `llama3.1:8b` with a 16K context pinned in VRAM, and a CPU-only evaluation host gets a small model with threads tuned to core count. See **Admin → Hardware** in the dashboard to review the detection, pull the recommended model, or override the choice.
+
+
 | Model           | Size  | Best For                             | VRAM Required |
 |-----------------|-------|--------------------------------------|---------------|
 | `llama3.1:8b`   | 5 GB  | Default — general use, fast          | 8 GB          |
 | `llama3.1:70b`  | 40 GB | Flagship — complex analysis          | 48 GB         |
 | `mistral:7b`    | 4 GB  | Document-heavy workloads             | 8 GB          |
 
-Change the default model in `.env`:
+Manual override (instead of the dashboard) via `.env`:
 
 ```
 DEFAULT_MODEL=llama3.1:70b

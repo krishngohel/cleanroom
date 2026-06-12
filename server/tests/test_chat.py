@@ -48,11 +48,10 @@ async def test_chat_completion_with_auth(client: AsyncClient, admin_token: str):
     }
 
     mock_http = AsyncMock()
-    mock_http.__aenter__ = AsyncMock(return_value=mock_http)
-    mock_http.__aexit__ = AsyncMock(return_value=False)
     mock_http.post = AsyncMock(return_value=mock_resp)
 
-    with patch("src.api.chat.httpx.AsyncClient", return_value=mock_http):
+    # Chat now uses a shared pooled client (src.http.get_ollama_client).
+    with patch("src.api.chat.get_ollama_client", return_value=mock_http):
         resp = await client.post(
             "/v1/chat/completions",
             json={"messages": [{"role": "user", "content": "Hello"}], "stream": False},

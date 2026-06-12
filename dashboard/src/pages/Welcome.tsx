@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MessageSquare, FolderOpen, FileText, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { MessageSquare, FolderOpen, FileText, ArrowRight, Bot, ShieldCheck, Sparkles } from "lucide-react";
 import { api } from "../api/client";
 import { useTenantBrand } from "../theme/useTenant";
 import { useCompliance } from "../compliance/useCompliance";
@@ -58,6 +58,16 @@ export default function Welcome() {
       color: "var(--c-accent)",
       cta: "Open chat",
       stat: `${stats.conversations} conversations`,
+    },
+    {
+      to: "/agent",
+      title: "Delegate a task",
+      blurb:
+        "Hand the agent a whole job — it plans the steps, reads pages and files, runs workflows, and reports back with the result. Every action is audited.",
+      icon: <Bot size={20} />,
+      color: "#f59e0b",
+      cta: "Open agent",
+      stat: "new",
     },
     {
       to: "/projects",

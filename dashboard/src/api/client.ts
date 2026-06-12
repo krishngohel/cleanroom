@@ -404,7 +404,169 @@ export const api = {
         body: JSON.stringify(data),
       }),
   },
+
+  hardware: {
+    status: () => request<HardwareStatus>("/v1/hardware"),
+    refresh: () => request<HardwareStatus>("/v1/hardware/refresh", { method: "POST" }),
+    setModel: (model: string | null) =>
+      request<{ active_model: string; override: string | null }>("/v1/hardware/model", {
+        method: "POST",
+        body: JSON.stringify({ model }),
+      }),
+    pull: (model: string) =>
+      request<{ started: boolean; model: string }>("/v1/hardware/pull", {
+        method: "POST",
+        body: JSON.stringify({ model }),
+      }),
+  },
+
+  agent: {
+    /** Run an agent task; events are delivered to onEvent as they stream in. */
+    run: async (
+      prompt: string,
+      opts: { workspaceId?: string | null; model?: string | null },
+      onEvent: (e: AgentEvent) => void,
+      signal?: AbortSignal,
+    ): Promise<void> => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const resp = await fetch(`${BASE_URL}/v1/agent/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          prompt,
+          workspace_id: opts.workspaceId ?? null,
+          model: opts.model ?? null,
+        }),
+        signal,
+      });
+      if (!resp.ok || !resp.body) {
+        let detail = `HTTP ${resp.status}`;
+        try {
+          detail = ((await resp.json()) as { detail?: string }).detail ?? detail;
+        } catch { /* ignore */ }
+        throw new Error(detail);
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data: ")) continue;
+          try {
+            onEvent(JSON.parse(line.slice(6)) as AgentEvent);
+          } catch { /* skip malformed event */ }
+        }
+      }
+    },
+    runs: () => request<AgentRunSummary[]>("/v1/agent/runs"),
+    getRun: (id: string) => request<AgentRunDetail>(`/v1/agent/runs/${id}`),
+  },
+
+  scheduled: {
+    list: () => request<ScheduledTaskItem[]>("/v1/scheduled-tasks"),
+    create: (data: ScheduledTaskInput) =>
+      request<ScheduledTaskItem>("/v1/scheduled-tasks", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: ScheduledTaskInput) =>
+      request<ScheduledTaskItem>(`/v1/scheduled-tasks/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    remove: (id: string) =>
+      request<void>(`/v1/scheduled-tasks/${id}`, { method: "DELETE" }),
+    runNow: (id: string) =>
+      request<{ started: boolean }>(`/v1/scheduled-tasks/${id}/run`, { method: "POST" }),
+  },
 };
+
+// ── Agent / hardware types ────────────────────────────────────────────────────
+
+export type AgentEvent =
+  | { type: "run"; id: string }
+  | { type: "plan"; steps: string[] }
+  | { type: "task_update"; index: number; status: "in_progress" | "done" }
+  | { type: "tool_call"; tool: string; args_summary: string }
+  | { type: "tool_result"; tool: string; ok: boolean; preview: string }
+  | { type: "answer"; text: string }
+  | { type: "files"; paths: string[] }
+  | { type: "error"; message: string }
+  | { type: "done" };
+
+export interface AgentRunSummary {
+  id: string;
+  prompt: string;
+  status: string;
+  answer_preview: string;
+  created_at: string;
+  finished_at: string | null;
+  workspace_id: string | null;
+}
+
+export interface AgentRunDetail extends Omit<AgentRunSummary, "answer_preview"> {
+  events: AgentEvent[];
+  answer: string;
+}
+
+export interface ScheduledTaskInput {
+  name: string;
+  prompt: string;
+  schedule_kind: "daily" | "interval";
+  interval_minutes: number;
+  daily_time: string;
+  enabled: boolean;
+  workspace_id?: string | null;
+}
+
+export interface ScheduledTaskItem extends ScheduledTaskInput {
+  id: string;
+  last_run_at: string | null;
+  last_run_id: string | null;
+  last_status: string | null;
+  created_at: string;
+}
+
+export interface HardwareStatus {
+  hardware: {
+    gpus: { name: string; vram_gb: number }[];
+    total_vram_gb: number;
+    ram_gb: number;
+    cpu_cores: number;
+    cpu_model: string;
+    os: string;
+    apple_silicon: boolean;
+  } | null;
+  recommendation: {
+    model: string;
+    label: string;
+    mode: "gpu" | "cpu";
+    reason: string;
+    best_for: string;
+    options: Record<string, unknown>;
+  } | null;
+  override: string | null;
+  active_model: string;
+  pull: { state: string; model?: string; percent?: number; error?: string };
+  installed: string[];
+  catalog: {
+    id: string;
+    label: string;
+    size_gb: number;
+    min_vram_gb: number;
+    quality: number;
+    best_for: string;
+  }[];
+}
 
 export interface PublicTenantSettings {
   brand_name: string;

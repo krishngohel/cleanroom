@@ -11,8 +11,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import get_current_user
-from ..config import settings
 from ..database import AuditLog, Project, ProjectFile, User, get_db
+from ..hardware import get_model_manager
+from ..http import get_ollama_client
 
 router = APIRouter(tags=["chat"])
 
@@ -76,7 +77,8 @@ async def chat_completions(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    model = body.model or settings.default_model
+    # "auto" or absent → the hardware-tuned active model.
+    model = body.model if body.model and body.model != "auto" else get_model_manager().active_model
     messages = [m.model_dump() for m in body.messages]
 
     project_ctx_bytes = 0
@@ -116,7 +118,7 @@ async def chat_completions(
     )
     await db.commit()
 
-    ollama_url = f"{settings.ollama_base_url}/v1/chat/completions"
+    ollama_url = "/v1/chat/completions"
 
     if body.stream:
         return StreamingResponse(
@@ -124,31 +126,31 @@ async def chat_completions(
             media_type="text/event-stream",
         )
 
-    async with httpx.AsyncClient(timeout=120) as client:
-        try:
-            resp = await client.post(ollama_url, json=payload)
-            resp.raise_for_status()
-        except httpx.ConnectError:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="AI runtime is unavailable. Ensure Ollama is running.",
-            )
-        except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    client = get_ollama_client()
+    try:
+        resp = await client.post(ollama_url, json=payload)
+        resp.raise_for_status()
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI runtime is unavailable. Ensure Ollama is running.",
+        )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
 
     return resp.json()
 
 
 async def _stream_ollama(url: str, payload: dict) -> AsyncGenerator[str, None]:
-    async with httpx.AsyncClient(timeout=120) as client:
-        try:
-            async with client.stream("POST", url, json=payload) as resp:
-                async for line in resp.aiter_lines():
-                    if line.startswith("data: "):
-                        yield f"{line}\n\n"
-                    elif line == "data: [DONE]":
-                        yield "data: [DONE]\n\n"
-                        break
-        except httpx.ConnectError:
-            error = json.dumps({"error": "AI runtime unavailable"})
-            yield f"data: {error}\n\n"
+    client = get_ollama_client()
+    try:
+        async with client.stream("POST", url, json=payload) as resp:
+            async for line in resp.aiter_lines():
+                if line.startswith("data: "):
+                    yield f"{line}\n\n"
+                elif line == "data: [DONE]":
+                    yield "data: [DONE]\n\n"
+                    break
+    except httpx.ConnectError:
+        error = json.dumps({"error": "AI runtime unavailable"})
+        yield f"data: {error}\n\n"

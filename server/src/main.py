@@ -12,6 +12,8 @@ from .auth import create_default_admin
 from .config import settings
 from .connectors.registry import ConnectorRegistry
 from .database import AsyncSessionLocal, init_db
+from .hardware import get_model_manager
+from .tasks.scheduler import TaskScheduler
 from .workflows.engine import WorkflowEngine
 
 from .api.auth_router import router as auth_router
@@ -28,6 +30,9 @@ from .api.prompts import router as prompts_router
 from .api.search import router as search_router
 from .api.insights import router as insights_router
 from .api.control import router as control_router
+from .api.hardware_router import router as hardware_router
+from .api.agent_router import router as agent_router
+from .api.scheduled import router as scheduled_router
 
 log = structlog.get_logger()
 
@@ -65,8 +70,22 @@ async def lifespan(app: FastAPI):
     engine.load_workflows(TEMPLATES_DIR)
     app.state.workflow_engine = engine
 
-    log.info("cleanroom_ready")
+    # Hardware auto-configuration: detect GPU/RAM/CPU, pick the best model,
+    # load any persisted admin override, and warm the model in the background.
+    mgr = get_model_manager()
+    async with AsyncSessionLocal() as db:
+        await mgr.load_override(db)
+    await mgr.auto_configure()
+    app.state.model_manager = mgr
+
+    # Scheduled agent tasks (daily digests, recurring reports).
+    scheduler = TaskScheduler()
+    scheduler.start()
+    app.state.task_scheduler = scheduler
+
+    log.info("cleanroom_ready", active_model=mgr.active_model)
     yield
+    scheduler.stop()
     log.info("cleanroom_stopping")
 
 
@@ -99,6 +118,9 @@ app.include_router(prompts_router)
 app.include_router(search_router)
 app.include_router(insights_router)
 app.include_router(control_router)
+app.include_router(hardware_router)
+app.include_router(agent_router)
+app.include_router(scheduled_router)
 
 
 @app.get("/metrics", include_in_schema=False)

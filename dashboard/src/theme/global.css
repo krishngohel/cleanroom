@@ -1,25 +1,25 @@
 :root {
-  --c-bg: #0f172a;
-  --c-bgElevated: #1e293b;
-  --c-bgSubtle: #172033;
-  --c-bgInput: #0b1220;
-  --c-bgOverlay: rgba(15, 23, 42, 0.85);
-  --c-border: #334155;
-  --c-borderStrong: #475569;
-  --c-text: #e2e8f0;
-  --c-textMuted: #94a3b8;
-  --c-textSubtle: #64748b;
-  --c-accent: #38bdf8;
-  --c-accentHover: #0ea5e9;
-  --c-accentFg: #0b1220;
-  --c-accentSoft: rgba(56, 189, 248, 0.12);
-  --c-success: #34d399;
+  --c-bg: #0b0d14;
+  --c-bgElevated: #13161f;
+  --c-bgSubtle: #181c28;
+  --c-bgInput: #0e1119;
+  --c-bgOverlay: rgba(11, 13, 20, 0.85);
+  --c-border: #262b3a;
+  --c-borderStrong: #39405a;
+  --c-text: #e7e9f0;
+  --c-textMuted: #9aa1b5;
+  --c-textSubtle: #646b80;
+  --c-accent: #7c9aff;
+  --c-accentHover: #5d7ff5;
+  --c-accentFg: #0b0d14;
+  --c-accentSoft: rgba(124, 154, 255, 0.13);
+  --c-success: #4ade80;
   --c-warning: #fbbf24;
   --c-danger: #f87171;
   --c-dangerSoft: rgba(239, 68, 68, 0.12);
-  --c-codeBg: #0b1220;
-  --c-codeText: #e2e8f0;
-  --c-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --c-codeBg: #0e1119;
+  --c-codeText: #e7e9f0;
+  --c-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
 }
 
 html,
@@ -169,4 +169,35 @@ a {
   border-radius: 12px;
   padding: 1.25rem;
   box-shadow: var(--c-shadow);
+}
+
+/* Focus rings — keyboard accessible, subtle for mouse users */
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 1px;
+  border-radius: 6px;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--c-accent) !important;
+}
+
+/* Spinner used by the agent task list and loading states */
+@keyframes cleanroom-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spin {
+  animation: cleanroom-spin 0.9s linear infinite;
+}
+
+/* Soft entrance for streamed panels */
+@keyframes cleanroom-rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise {
+  animation: cleanroom-rise 180ms ease;
 }

@@ -1,21 +1,25 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Navigate, NavLink, Route, Routes, useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
-import { LogOut, MessageSquare, FileText, Activity, Settings, Shield, FileSearch, FolderOpen, Home, BarChart3, Wand2 } from "lucide-react";
+import { LogOut, MessageSquare, FileText, Activity, Settings, Shield, FileSearch, FolderOpen, Home, BarChart3, Wand2, Bot } from "lucide-react";
 import { api } from "./api/client";
-import Chat from "./pages/Chat";
-import Reports from "./pages/Reports";
-import Status from "./pages/Status";
-import Admin from "./pages/Admin";
-import AuditLog from "./pages/AuditLog";
 import Login from "./pages/Login";
-import Projects from "./pages/Projects";
-import ProjectDetail from "./pages/ProjectDetail";
-import Code from "./pages/Code";
-import CodeWorkspace from "./pages/CodeWorkspace";
-import Welcome from "./pages/Welcome";
-import Prompts from "./pages/Prompts";
-import Insights from "./pages/Insights";
+
+// Route-level code splitting — each page loads on first visit, which keeps
+// the initial bundle small and the dashboard snappy on modest hardware.
+const Chat = lazy(() => import("./pages/Chat"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Status = lazy(() => import("./pages/Status"));
+const Admin = lazy(() => import("./pages/Admin"));
+const AuditLog = lazy(() => import("./pages/AuditLog"));
+const Projects = lazy(() => import("./pages/Projects"));
+const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
+const Code = lazy(() => import("./pages/Code"));
+const CodeWorkspace = lazy(() => import("./pages/CodeWorkspace"));
+const Welcome = lazy(() => import("./pages/Welcome"));
+const Prompts = lazy(() => import("./pages/Prompts"));
+const Insights = lazy(() => import("./pages/Insights"));
+const Agent = lazy(() => import("./pages/Agent"));
 import { useTheme } from "./theme/ThemeProvider";
 import { useTenantBrand } from "./theme/useTenant";
 import { useCompliance } from "./compliance/useCompliance";
@@ -78,6 +82,7 @@ function Layout() {
   const navItems: { to: string; label: string; icon: ReactNode }[] = [
     { to: "/welcome", label: "Home", icon: <Home size={15} /> },
     { to: "/chat", label: "Chat", icon: <MessageSquare size={15} /> },
+    { to: "/agent", label: "Agent", icon: <Bot size={15} /> },
     { to: "/projects", label: "Projects", icon: <FolderOpen size={15} /> },
     { to: "/code", label: "Files", icon: <FileText size={15} /> },
     { to: "/prompts", label: "Prompts", icon: <Wand2 size={15} /> },
@@ -217,9 +222,17 @@ function Layout() {
       >
         <ComplianceBanner settings={compliance} />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <Suspense
+            fallback={
+              <div style={{ padding: "2rem", color: "var(--c-textSubtle)", fontSize: 13 }}>
+                Loading…
+              </div>
+            }
+          >
           <Routes>
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/agent" element={<Agent />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/code" element={<Code />} />
@@ -232,6 +245,7 @@ function Layout() {
             <Route path="/admin/audit" element={<AuthGuard adminOnly><AuditLog /></AuthGuard>} />
             <Route path="*" element={<Navigate to="/welcome" replace />} />
           </Routes>
+          </Suspense>
         </div>
         <ComplianceFooter settings={compliance} />
       </main>

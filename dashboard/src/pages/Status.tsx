@@ -12,6 +12,7 @@ import {
 import { api } from "../api/client";
 import type { SystemStatus } from "../types";
 import SystemStats from "../components/SystemStats";
+import HardwareCard from "../components/HardwareCard";
 import { useTheme } from "../theme/ThemeProvider";
 
 const HISTORY_LIMIT = 20;
@@ -117,6 +118,10 @@ export default function Status() {
           {error}
         </div>
       )}
+
+      <div style={{ marginBottom: 16 }}>
+        <HardwareCard admin={api.auth.getUser()?.role === "admin"} />
+      </div>
 
       {status && (
         <>

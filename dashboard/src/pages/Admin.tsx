@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { Palette, Plug, ShieldCheck, Users as UsersIcon, Trash2 } from "lucide-react";
+import { Gauge, Palette, Plug, ShieldCheck, Users as UsersIcon, Trash2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { api, type TenantSettings } from "../api/client";
 import type { Connector, User } from "../types";
 import { useToast } from "../components/Toast";
 import { useTheme } from "../theme/ThemeProvider";
+import HardwareCard from "../components/HardwareCard";
 
-type Tab = "users" | "connectors" | "branding" | "compliance";
+type Tab = "users" | "connectors" | "branding" | "compliance" | "hardware";
 
 const FRAMEWORK_OPTIONS = ["SOC2", "HIPAA", "GDPR", "ISO 27001", "FedRAMP", "PCI-DSS"];
 
@@ -193,7 +194,22 @@ export default function Admin() {
         <button style={tabStyle(tab === "compliance")} onClick={() => setTab("compliance")}>
           <ShieldCheck size={14} /> Compliance
         </button>
+        <button style={tabStyle(tab === "hardware")} onClick={() => setTab("hardware")}>
+          <Gauge size={14} /> Hardware
+        </button>
       </div>
+
+      {tab === "hardware" && (
+        <div style={{ maxWidth: 720, display: "flex", flexDirection: "column", gap: 14 }}>
+          <HardwareCard admin />
+          <div style={{ fontSize: 12.5, color: "var(--c-textSubtle)", lineHeight: 1.6 }}>
+            On startup Cleanroom probes this server's GPU, RAM, and CPU and automatically
+            serves the best model the hardware can run well — and tunes context length,
+            GPU offload, and model keep-alive to match. Override the choice here if you
+            need a specific model; "Automatic" returns to hardware-based selection.
+          </div>
+        </div>
+      )}
 
       {tab === "users" && (
         <>

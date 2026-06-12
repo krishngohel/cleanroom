@@ -212,6 +212,59 @@ class TenantSettings(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class SystemSetting(Base):
+    """Simple key/value store for runtime configuration (e.g. model override)."""
+
+    __tablename__ = "system_settings"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+
+class AgentRun(Base):
+    """A single agent task execution — plan, tool calls, and outcome."""
+
+    __tablename__ = "agent_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    username: Mapped[str] = mapped_column(String(80), nullable=False)
+    prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="running")
+    # Full event trace: plan, task list updates, tool calls/results, answer.
+    events: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    answer: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    model: Mapped[str] = mapped_column(String(80), nullable=False, default="")
+    workspace_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class ScheduledTask(Base):
+    """A recurring agent job — e.g. a daily digest or weekly report."""
+
+    __tablename__ = "scheduled_tasks"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    username: Mapped[str] = mapped_column(String(80), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    # "interval" (every N minutes) or "daily" (at HH:MM server time)
+    schedule_kind: Mapped[str] = mapped_column(String(20), nullable=False, default="daily")
+    interval_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=1440)
+    daily_time: Mapped[str] = mapped_column(String(5), nullable=False, default="08:00")
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    workspace_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    last_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,

@@ -496,7 +496,9 @@ async def propose_edit(
     else:
         current = ""
 
-    model = body.model or settings.default_model
+    from ..hardware import get_model_manager
+
+    model = body.model or get_model_manager().active_model
 
     system_prompt = (
         "You are a precision code editor. Apply the user's instruction to the file and "
